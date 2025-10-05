@@ -5,6 +5,7 @@ omit =
     tests/*
     venv/*
     setup.py
+    **/__init__.py
 
 [report]
 # Exclude specific lines (optional)
@@ -13,6 +14,10 @@ exclude_lines =
     if __name__ == .__main__.:
     def __repr__
     raise NotImplementedError
+    sys\.exit\(_main\(\)\)
+
+omit =
+    **/__init__.py
 
 # Fail CI if coverage drops below this
 fail_under = 80
