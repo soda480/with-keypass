@@ -27,15 +27,9 @@ PIP := $(BIN)/pip
 
 .PHONY: dev venv lint test coverage cc bandit build clean deepclean
 
-# ------------------------------------------------------------------------
-# Main pipeline
-# ------------------------------------------------------------------------
 dev: venv lint test coverage cc bandit build
 	@echo "✅ Development pipeline complete."
 
-# ------------------------------------------------------------------------
-# Virtual environment management
-# ------------------------------------------------------------------------
 # Rebuild the venv only when pyproject.toml changes
 venv: $(VENV)/.stamp
 
@@ -49,9 +43,6 @@ $(VENV)/.stamp: pyproject.toml
 	@# Touch the stamp file to record the last successful build time
 	@touch $@
 
-# ------------------------------------------------------------------------
-# Linting and testing
-# ------------------------------------------------------------------------
 lint:
 	$(PY) -m flake8 -v $(PKG)/ --max-line-length 100 --ignore=E302,E305
 
@@ -70,15 +61,9 @@ cc:
 bandit:
 	$(PY) -m bandit -r $(PKG)/ --skip B606
 
-# ------------------------------------------------------------------------
-# Build artifacts
-# ------------------------------------------------------------------------
 build:
 	$(PY) -m build
 
-# ------------------------------------------------------------------------
-# Cleanup
-# ------------------------------------------------------------------------
 clean:
 	@echo "Cleaning build and test artifacts…"
 	rm -rf .pytest_cache .coverage htmlcov build dist *.egg-info badges/coverage.svg
