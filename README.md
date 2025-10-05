@@ -126,7 +126,6 @@ Run AWS CLI with injected credentials:
 ```bash
 with-keypass \
 --path 'AwsSecrets' \
---field-name value \
 -- aws s3 ls
 ```
 

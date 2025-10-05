@@ -23,6 +23,13 @@ class TestWithKeePass(unittest.TestCase):
         print_patch.assert_called_once_with('a message', file=sys.stderr)
         exit_patch.assert_called_once_with(2)
 
+    @patch('with_keepass.__main__.sys.exit')
+    @patch('builtins.print')
+    def test__sys_exit_no_stderr(self, print_patch, exit_patch, *patches):
+        sys_exit('a message', stderr=False)
+        print_patch.assert_called_once_with('a message')
+        exit_patch.assert_called_once_with(0)
+
     @patch.dict(os.environ, {}, clear=True)
     @patch('with_keepass.__main__.sys.argv', ['prog', '--dry-run'])
     def test__parse_args_defaults(self):
@@ -49,9 +56,13 @@ class TestWithKeePass(unittest.TestCase):
 
     @patch.dict(os.environ, {}, clear=True)
     @patch('with_keepass.__main__.sys.argv', ['prog'])
-    def test__parse_args_parser_error(self):
-        with self.assertRaises(SystemExit):
-            parse_args()
+    @patch('with_keepass.__main__.argparse.ArgumentParser')
+    def test__parse_args_parser_error(self, argument_parser_patch, *patches):
+        parser_mock = Mock()
+        parser_mock.parse_args.return_value = argparse.Namespace(command=[], dry_run=False)
+        argument_parser_patch.return_value = parser_mock
+        parse_args()
+        parser_mock.error.assert_called_once()
 
     def test__env_from_group(self, *patches):
         entry1_mock = Mock(title='key1')
@@ -86,8 +97,7 @@ class TestWithKeePass(unittest.TestCase):
         _env_from_group(group_mock, '/path')
         sys_exit_patch.assert_called_once()
 
-    @patch('with_keepass.__main__.sys_exit')
-    def test__env_from_entry_no_custom_properties(self, sys_exit_patch, *patches):
+    def test__env_from_entry_custom_properties(self, *patches):
         entry_mock = Mock(custom_properties={'k1': 'v1'})
         result = _env_from_entry(entry_mock, '/path')
         expected_result = {'k1': 'v1'}
@@ -180,6 +190,7 @@ class TestWithKeePass(unittest.TestCase):
             _main()
         print_patch.assert_called()
 
+    @patch('builtins.print')
     @patch('with_keepass.__main__.get_password')
     def test__main_password_error(self, get_password_patch, *patches):
         get_password_patch.side_effect = [EOFError('error')]
