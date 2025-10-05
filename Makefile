@@ -25,20 +25,33 @@ endif
 PY  := $(BIN)/python3
 PIP := $(BIN)/pip
 
-.PHONY: dev venv deps lint test coverage cc bandit build clean deepclean
+.PHONY: dev venv lint test coverage cc bandit build clean deepclean
 
+# ------------------------------------------------------------------------
+# Main pipeline
+# ------------------------------------------------------------------------
 dev: venv lint test coverage cc bandit build
 	@echo "✅ Development pipeline complete."
 
-# Create venv (if missing), upgrade pip, and install dev deps
-venv: $(VENV)
-	@$(PIP) install --upgrade pip
-	@$(PIP) install -e .[dev]
+# ------------------------------------------------------------------------
+# Virtual environment management
+# ------------------------------------------------------------------------
+# Rebuild the venv only when pyproject.toml changes
+venv: $(VENV)/.stamp
 
-$(VENV):
+$(VENV)/.stamp: pyproject.toml
+	@echo ">> Ensuring virtual environment exists at $(VENV)"
 	@python3 -m venv $(VENV)
+	@echo ">> Upgrading pip"
+	@$(PIP) install --upgrade pip
+	@echo ">> Installing project in editable mode with dev extras"
+	@$(PIP) install -e .[dev]
+	@# Touch the stamp file to record the last successful build time
+	@touch $@
 
-# Individual steps (all executed inside the venv)
+# ------------------------------------------------------------------------
+# Linting and testing
+# ------------------------------------------------------------------------
 lint:
 	$(PY) -m flake8 -v $(PKG)/ --max-line-length 100 --ignore=E302,E305
 
@@ -57,9 +70,15 @@ cc:
 bandit:
 	$(PY) -m bandit -r $(PKG)/ --skip B606
 
+# ------------------------------------------------------------------------
+# Build artifacts
+# ------------------------------------------------------------------------
 build:
 	$(PY) -m build
 
+# ------------------------------------------------------------------------
+# Cleanup
+# ------------------------------------------------------------------------
 clean:
 	@echo "Cleaning build and test artifacts…"
 	rm -rf .pytest_cache .coverage htmlcov build dist *.egg-info badges/coverage.svg
